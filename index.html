@@ -1,4 +1,18 @@
 <!DOCTYPE html>
+<!--
+    ===================================================================
+    BILL TRACKER v8.10 — "Data Safety" Release  (2026-05-25)
+    ===================================================================
+    CHANGELOG vs v8.9:
+      • NEW 📊 Export Bills CSV   (Settings → Backup & Restore)
+      • NEW 📊 Export History CSV (Settings → Backup & Restore)
+      • NEW 💾 Quick Backup floating button (bottom-right) — one-click JSON export
+      • NEW Weekly backup reminder banner (top of main view, dismissible 7d)
+      • FIX Save & Exit button recolored from red to primary green (no longer reads as destructive)
+      • LocalStorage keys unchanged — fully data-compatible with v8.9 backups
+    Author: Johnnie Thomas Pryor  —  Las Vegas, Nevada
+    ===================================================================
+-->
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +20,7 @@
     <meta name="author" content="Johnnie Thomas Pryor - Retired U.S. Air Force, Defense Contractor">
     <meta name="description" content="Personal Bill Tracker - Created and owned by Johnnie Thomas Pryor">
     <meta name="copyright" content="Copyright © 2026 Johnnie Thomas Pryor. All rights reserved.">
-    <title>Bill Tracker v8.9</title>
+    <title>Bill Tracker v8.10</title>
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1672,7 +1686,7 @@
     Former Defense Contractor: Raytheon, PE Systems
 
     Date: May 2026
-    Version: 8.9
+    Version: 8.10
 
     This application and all associated code is the intellectual 
     property of Johnnie Thomas Pryor. Unauthorized copying, 
@@ -1706,9 +1720,13 @@
             <button class="nav-btn" data-tab="calculator">🧮 Calculator</button>
             <button class="nav-btn" data-tab="help">❓ Help</button>
             <button class="nav-btn" data-tab="settings">⚙️ Settings</button>
-            <button class="nav-btn" id="exitSaveBtn" onclick="exitAndSave()" style="color:#ef4444; border-top:1px solid var(--border); margin-top:0.5rem; padding-top:0.75rem;">💾 Save &amp; Exit</button>
+            <button class="nav-btn" id="exitSaveBtn" onclick="exitAndSave()" style="color:var(--primary); border-top:1px solid var(--border); margin-top:0.5rem; padding-top:0.75rem; font-weight:600;">💾 Save &amp; Exit</button>
         </div>
     </div>
+
+    <!-- ===== v8.10 QUICK BACKUP FLOATING BUTTON ===== -->
+    <button id="quickBackupFab" onclick="exportData()" title="Quick backup" aria-label="Quick backup" style="position:fixed; bottom:5.5rem; right:1.25rem; width:48px; height:48px; border-radius:50%; background:var(--primary); color:#fff; border:none; box-shadow:0 6px 18px rgba(0,0,0,0.35); font-size:1.3rem; cursor:pointer; z-index:9000; display:flex; align-items:center; justify-content:center;">💾</button>
+    <!-- ===== END QUICK BACKUP FAB ===== -->
 
     <!-- Bottom Nav (mobile phones) -->
     <nav id="bottomNav">
@@ -1733,6 +1751,15 @@
     </div>
 
     <div class="main-content">
+        <!-- ===== v8.10 BACKUP REMINDER BANNER ===== -->
+        <div id="backupReminderBanner" style="display:none; align-items:center; gap:0.75rem; flex-wrap:wrap; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); color:var(--text); padding:0.75rem 1rem; border-radius:12px; margin-bottom:1rem;">
+            <span style="font-size:1.3rem;">💾</span>
+            <span id="backupReminderText" style="flex:1; min-width:200px; font-size:0.95rem;">Time to back up your data.</span>
+            <button class="btn btn-outline" onclick="exportData()" style="padding:0.4rem 1rem; font-size:0.9rem;">Back up now</button>
+            <button class="btn btn-outline" onclick="dismissBackupReminder()" style="padding:0.4rem 0.9rem; font-size:0.9rem; opacity:0.7;">Dismiss</button>
+        </div>
+        <!-- ===== END BACKUP REMINDER BANNER ===== -->
+
         <div id="dashboard" class="tab-content">
             <div class="section-toolbar"><h1>Dashboard</h1><button class="btn btn-outline" onclick="downloadSectionPDF('dashboard', 'dashboard-summary')">📄 Download PDF</button></div>
             <h1>Overview</h1>
@@ -2081,7 +2108,7 @@
 
             <!-- Version Info -->
             <div style="text-align:center; padding:1rem 0 2rem; font-size:0.82rem; color:#666;">
-                Bill Tracker v8.9 &nbsp;&bull;&nbsp; Copyright &copy; 2026 Johnnie Thomas Pryor &nbsp;&bull;&nbsp; All rights reserved
+                Bill Tracker v8.10 &nbsp;&bull;&nbsp; Copyright &copy; 2026 Johnnie Thomas Pryor &nbsp;&bull;&nbsp; All rights reserved
             </div>
         </div>
         <!-- ===== END HELP TAB ===== -->
@@ -2486,7 +2513,7 @@
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:0.75rem; margin-bottom:1rem;">
                     <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:0.9rem 1rem;">
                         <div style="font-size:0.75rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem;">App Version</div>
-                        <div style="font-size:1rem; font-weight:600; color:var(--text);">Bill Tracker v8.9</div>
+                        <div style="font-size:1rem; font-weight:600; color:var(--text);">Bill Tracker v8.10</div>
                     </div>
                     <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:0.9rem 1rem;">
                         <div style="font-size:0.75rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem;">Account</div>
@@ -2524,9 +2551,12 @@
                     <button class="btn btn-outline" id="exportBtn" style="padding:0.7rem 1.4rem;">📥 Export Backup</button>
                     <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()" style="padding:0.7rem 1.4rem;">📤 Import Backup</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none;">
+                    <button class="btn btn-outline" id="exportBillsCsvBtn" onclick="exportBillsCSV()" style="padding:0.7rem 1.4rem;">📊 Export Bills CSV</button>
+                    <button class="btn btn-outline" id="exportHistoryCsvBtn" onclick="exportHistoryCSV()" style="padding:0.7rem 1.4rem;">📊 Export History CSV</button>
                     <button class="btn btn-outline" onclick="document.getElementById('csvImportInput').click()" style="padding:0.7rem 1.4rem;">📊 Import CSV</button>
                     <input type="file" id="csvImportInput" accept=".csv" style="display:none;">
                 </div>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">&#128202; <strong>Export Bills CSV</strong>: Download your full bill list as a spreadsheet (Name, Amount, Frequency, Due Date, Category, Priority).<br>&#128202; <strong>Export History CSV</strong>: Download your payment history as a spreadsheet (Date, Bill, Action, Amount).</p>
             </div>
 
         </div>
@@ -2559,7 +2589,7 @@
         <!-- ===== END LICENSE ACTIVATION OVERLAY ===== -->
 
         <div class="footer-copyright">
-            © 2026 Bill Tracker | Version 8.9 | Created by Johnnie Thomas Pryor, Retired U.S. Air Force | All rights reserved
+            © 2026 Bill Tracker | Version 8.10 | Created by Johnnie Thomas Pryor, Retired U.S. Air Force | All rights reserved
         </div>
     </div>
 
@@ -2573,7 +2603,7 @@
          * Retired U.S. Air Force
          * Former Defense Contractor: Raytheon, PE Systems
          * 
-         * Version: 8.9
+         * Version: 8.10
          * Date: May 2026
          * 
          * This code is the intellectual property of Johnnie Thomas Pryor.
@@ -4463,11 +4493,119 @@
 
         }
 
+        // ===== v8.10 CSV EXPORT HELPERS =====
+        function csvEscape(val) {
+            if (val === null || val === undefined) return '';
+            const s = String(val);
+            if (/[",\n\r]/.test(s)) {
+                return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        }
+
+        function downloadCSV(filename, headers, rows) {
+            const lines = [headers.map(csvEscape).join(',')];
+            rows.forEach(r => lines.push(r.map(csvEscape).join(',')));
+            const csv = '\uFEFF' + lines.join('\r\n'); // BOM for Excel UTF-8
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            markBackupDate();
+        }
+
+        function exportBillsCSV() {
+            const headers = ['Name','Amount','Frequency','Due Day','Due Month','Category','Priority','Paid Amount','Status','Notes'];
+            const rows = (billData || []).map(b => [
+                b.name || '',
+                Number(b.amount || 0).toFixed(2),
+                b.frequency || 'Monthly',
+                b.dueDate || '',
+                b.dueMonth || '',
+                b.category || 'General',
+                b.priority || 'Important',
+                Number(b.paidAmount || 0).toFixed(2),
+                b.status || '',
+                b.review || ''
+            ]);
+            const fname = `billtrack-bills-${new Date().toISOString().split('T')[0]}.csv`;
+            downloadCSV(fname, headers, rows);
+            showCsvToast('✔ Exported ' + rows.length + ' bills to CSV.');
+        }
+
+        function exportHistoryCSV() {
+            const headers = ['Date','Bill Name','Action','Amount','Before Paid','After Paid','Source'];
+            const rows = (paymentHistory || []).map(h => [
+                h.timestamp || h.date || h.paidDate || '',
+                h.billName || h.name || '',
+                h.actionType || '',
+                Number(h.amount || 0).toFixed(2),
+                Number(h.beforePaid || 0).toFixed(2),
+                Number(h.afterPaid || 0).toFixed(2),
+                h.source || ''
+            ]);
+            const fname = `billtrack-history-${new Date().toISOString().split('T')[0]}.csv`;
+            downloadCSV(fname, headers, rows);
+            showCsvToast('✔ Exported ' + rows.length + ' history entries to CSV.');
+        }
+
+        function showCsvToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;font-size:0.95rem;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        // ===== END v8.10 CSV EXPORT =====
+
+        // ===== v8.10 BACKUP REMINDER =====
+        const LAST_BACKUP_KEY = 'billTracker_lastBackupDate';
+        function markBackupDate() {
+            try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch(e){}
+            const banner = document.getElementById('backupReminderBanner');
+            if (banner) banner.style.display = 'none';
+        }
+        function checkBackupReminder() {
+            try {
+                const last = localStorage.getItem(LAST_BACKUP_KEY);
+                const banner = document.getElementById('backupReminderBanner');
+                if (!banner) return;
+                if (localStorage.getItem('billTracker_backupBannerDismissedUntil')) {
+                    const until = new Date(localStorage.getItem('billTracker_backupBannerDismissedUntil'));
+                    if (until > new Date()) { banner.style.display = 'none'; return; }
+                }
+                if (!last) {
+                    document.getElementById('backupReminderText').textContent = 'No backup on record yet. Protect your data — export a backup now.';
+                    banner.style.display = 'flex';
+                    return;
+                }
+                const days = Math.floor((Date.now() - new Date(last).getTime()) / (1000*60*60*24));
+                if (days >= 7) {
+                    document.getElementById('backupReminderText').textContent = 'Last backup: ' + days + ' day' + (days===1?'':'s') + ' ago. Time to back up again.';
+                    banner.style.display = 'flex';
+                } else {
+                    banner.style.display = 'none';
+                }
+            } catch(e){}
+        }
+        function dismissBackupReminder() {
+            const until = new Date(Date.now() + 7*24*60*60*1000);
+            try { localStorage.setItem('billTracker_backupBannerDismissedUntil', until.toISOString()); } catch(e){}
+            const banner = document.getElementById('backupReminderBanner');
+            if (banner) banner.style.display = 'none';
+        }
+        // ===== END v8.10 BACKUP REMINDER =====
+
         function exportData() {
             const exportObj = {
                 metadata: {
                     application: 'Bill Tracker',
-                    version: '8.9',
+                    version: '8.10',
                     author: 'Johnnie Thomas Pryor',
                     bio: 'Born 1966, Akron, Ohio. Retired U.S. Air Force. Former Defense Contractor (Raytheon, PE Systems).',
                     exportDate: new Date().toISOString(),
@@ -4485,6 +4623,7 @@
             a.download = `bill-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            markBackupDate();
         }
 
         function exitAndSave() {
@@ -4493,7 +4632,7 @@
                 const exportObj = {
                     metadata: {
                         application: 'Bill Tracker',
-                        version: '8.9',
+                        version: '8.10',
                         author: 'Johnnie Thomas Pryor',
                         exportDate: new Date().toISOString(),
                         copyright: 'Copyright \u00a9 2026 Johnnie Thomas Pryor. All rights reserved.'
@@ -4511,6 +4650,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                markBackupDate();
             } catch(e) {
                 console.warn('Auto-save failed:', e);
             }
@@ -4530,9 +4670,12 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
+            // v8.10: check backup-reminder banner
+            try { checkBackupReminder(); } catch(e) { console.warn('Backup reminder check failed:', e); }
+
             // Log authorship on load
             console.log('%c═══════════════════════════════════════════════════════════════', 'color: #10b981; font-weight: bold;');
-            console.log('%cBILL TRACKER v8.9', 'color: #10b981; font-size: 16px; font-weight: bold;');
+            console.log('%cBILL TRACKER v8.10', 'color: #10b981; font-size: 16px; font-weight: bold;');
             console.log('%cCreated by: Johnnie Thomas Pryor', 'color: #10b981;');
             console.log('%cBorn: 1966, Akron, Ohio', 'color: #10b981;');
             console.log('%cRetired U.S. Air Force | Former Defense Contractor', 'color: #10b981;');
