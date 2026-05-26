@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <!--
     ===================================================================
-    BILL TRACKER v8.10 — "Data Safety" Release  (2026-05-25)
+    BILL TRACKER v8.10.1 — "Data Safety" Release  (2026-05-26)
+    v8.10.1 patch: Sidebar scroll fix — force always-visible scrollbar, add bottom padding,
+                   max-height clamp so Settings + Save & Exit always reachable on short screens.
     ===================================================================
     CHANGELOG vs v8.9:
       • NEW 📊 Export Bills CSV   (Settings → Backup & Restore)
@@ -9,6 +11,7 @@
       • NEW 💾 Quick Backup floating button (bottom-right) — one-click JSON export
       • NEW Weekly backup reminder banner (top of main view, dismissible 7d)
       • FIX Save & Exit button recolored from red to primary green (no longer reads as destructive)
+      • FIX Sidebar now scrolls (overflow-y: auto) — Settings + Save & Exit always reachable on short laptop screens
       • LocalStorage keys unchanged — fully data-compatible with v8.9 backups
     Author: Johnnie Thomas Pryor  —  Las Vegas, Nevada
     ===================================================================
@@ -20,7 +23,7 @@
     <meta name="author" content="Johnnie Thomas Pryor - Retired U.S. Air Force, Defense Contractor">
     <meta name="description" content="Personal Bill Tracker - Created and owned by Johnnie Thomas Pryor">
     <meta name="copyright" content="Copyright © 2026 Johnnie Thomas Pryor. All rights reserved.">
-    <title>Bill Tracker v8.10</title>
+    <title>Bill Tracker v8.10.1</title>
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -66,13 +69,28 @@
             width: 260px; 
             background: var(--sidebar); 
             color: white; 
-            padding: 2rem 1.5rem; 
+            padding: 2rem 1.5rem 4rem 1.5rem;  /* v8.10.1: extra bottom padding so last button isn't flush against viewport edge */
             display: flex; 
             flex-direction: column; 
             position: fixed; 
+            top: 0;
+            left: 0;
             height: 100vh; 
+            max-height: 100vh;            /* v8.10.1: prevents flex from expanding past viewport */
             z-index: 1000; 
+            overflow-y: scroll;           /* v8.10.1: ALWAYS-VISIBLE scrollbar so users see they can scroll */
+            overscroll-behavior: contain; /* keeps scroll inside sidebar */
+            scrollbar-gutter: stable;     /* v8.10.1: reserves space for scrollbar to prevent layout shift */
         }
+        /* v8.10.1: ensure flex children can shrink properly */
+        .sidebar > * { flex-shrink: 0; }
+        /* Slim custom scrollbar for the sidebar (v8.10 hotfix, enhanced v8.10.1) */
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.30); border-radius: 4px; }
+        .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.50); }
+        .sidebar::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); }
+        /* Firefox scrollbar */
+        .sidebar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.30) rgba(0,0,0,0.15); }
 
         .nav-btn { 
             background: none; 
@@ -1686,7 +1704,7 @@
     Former Defense Contractor: Raytheon, PE Systems
 
     Date: May 2026
-    Version: 8.10
+    Version: 8.10.1
 
     This application and all associated code is the intellectual 
     property of Johnnie Thomas Pryor. Unauthorized copying, 
@@ -2108,7 +2126,7 @@
 
             <!-- Version Info -->
             <div style="text-align:center; padding:1rem 0 2rem; font-size:0.82rem; color:#666;">
-                Bill Tracker v8.10 &nbsp;&bull;&nbsp; Copyright &copy; 2026 Johnnie Thomas Pryor &nbsp;&bull;&nbsp; All rights reserved
+                Bill Tracker v8.10.1 &nbsp;&bull;&nbsp; Copyright &copy; 2026 Johnnie Thomas Pryor &nbsp;&bull;&nbsp; All rights reserved
             </div>
         </div>
         <!-- ===== END HELP TAB ===== -->
@@ -2589,7 +2607,7 @@
         <!-- ===== END LICENSE ACTIVATION OVERLAY ===== -->
 
         <div class="footer-copyright">
-            © 2026 Bill Tracker | Version 8.10 | Created by Johnnie Thomas Pryor, Retired U.S. Air Force | All rights reserved
+            © 2026 Bill Tracker | Version 8.10.1 | Created by Johnnie Thomas Pryor, Retired U.S. Air Force | All rights reserved
         </div>
     </div>
 
